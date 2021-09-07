@@ -21,12 +21,33 @@
               <v-card-title>
                 {{ task.title }}
                 <v-spacer></v-spacer>
-                <v-btn text>
-                  {{ task.time }}
-                </v-btn>  
+                <v-menu
+                  ref="menu"
+                  v-model="menu2"
+                  transition="scale-transition"
+                  :close-on-content-click="false"
+                  offset-y
+                  max-width="290px"
+                  min-width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn 
+                      text 
+                      v-on="on"
+                      v-bind="attrs"
+                    >
+                      {{ task.time }}
+                    </v-btn>  
+                  </template>
+                  <v-time-picker
+                    v-if="menu2"
+                    v-model="timeTmp"
+                    full-width
+                    @click:minute="updateTaskTime(task.id, timeTmp)"
+                  ></v-time-picker>
+                </v-menu>
               </v-card-title>
               <v-card-text>
-                
                 <div>
                   {{ task.desc }}
                 </div>
@@ -46,19 +67,26 @@
       >
         <v-card-title>Nowe zadanie</v-card-title>
         <v-card-text>
-          <v-text-field 
-            v-model="taskTitle"
-            label="Tytuł"
-            required
-          ></v-text-field>
-          <v-textarea 
-            v-model="taskDesc"
-            label="Opis" 
-            required
-          ></v-textarea>
+          <v-form>
+            <v-text-field 
+              v-model="taskTitle"
+              :error-messages="taskTitleErrors"
+              label="Tytuł"
+              required
+              @input="$v.taskTitle.$touch()"
+              @blur="$v.taskTitle.$touch()"
+            ></v-text-field>
+            <v-textarea 
+              v-model="taskDesc"
+              label="Opis" 
+              required
+              scrollable
+            ></v-textarea>
+          </v-form>
           <v-time-picker
-            format="ampm"
             v-model="taskTime"
+            value="08:11"
+            format="24hr"
           ></v-time-picker>
         </v-card-text>
         <v-card-actions>
@@ -69,7 +97,6 @@
           >dodaj</v-btn>
         </v-card-actions>
       </v-card>
-
       </v-overlay>
     </v-main>
     <v-btn
@@ -82,46 +109,41 @@
     >
       <v-icon>mdi-plus</v-icon>
     </v-btn>
-    <!--
-    <v-footer
-      color="primary lighten-1"
-      padless
-    >
-      <v-row
-        justify="center"
-        no-gutters
-      >
-        <v-btn
-          v-for="link in links"
-          :key="link"
-          color="white"
-          text
-          rounded
-          class="my-2"
-        >
-          {{ link }}
-        </v-btn>
-      </v-row>
-    </v-footer>
-    -->
   </v-app>
 </template>
 
 <script>
 
+import { validationMixin } from 'vuelidate'
+import { required } from 'vuelidate/lib/validators'
+
 export default {
   name: 'App',
 
+  mixins: [validationMixin],
+
   computed: {
+    taskTitleErrors () {
+      const errors = []
+        if (!this.$v.taskTitle.$dirty) return errors
+        !this.$v.taskTitle.required && errors.push('Pole wymagane')
+      return errors
+    }
+  },
+
+  validations: {
+    taskTitle: { required },
   },
 
   data: () => ({
     showPassword: false,
     absolute: true,
     overlay: false,
+    menu2: false,
+    timeTmp: null,
     taskTitle: '',
     taskDesc: '',
-    taskTime: '',
+    taskTime: new Date().getHours() + ":" + new Date().getMinutes(),
     tasks: [{
       id: 1,
       time: '10:45',
@@ -131,10 +153,21 @@ export default {
   }),
   methods: {
     saveTask(){
-      console.log('test')
-      this.tasks.push({id: this.tasks.at(-1).id + 1, time: this.taskTime, title: this.taskTitle, desc: this.taskDesc})
-      this.overlay = false
-    }
+      this.$v.$touch()
+      if (!this.$v.$invalid) {
+        this.tasks.push({id: this.tasks.at(-1).id + 1, time: this.taskTime, title: this.taskTitle, desc: this.taskDesc})
+        this.overlay = false
+      }
+    },
+    updateTaskTime(id, time) {
+      for (var i = 0; i < this.tasks.length; i++) {
+        console.log(i)
+        if (this.tasks[i].id == id) {
+          this.tasks[i].time = time
+        }
+      }
+      this.menu2 = false
+    },
   }
 };
 </script>
