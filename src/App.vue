@@ -37,33 +37,6 @@
                     v-model="task.title"
                     @blur="titleChange = false"
                   ></v-text-field>
-                  <v-spacer></v-spacer>
-                  <!-- TIME WITH TIME PICKER MENU ON CLICK --> 
-                  <v-menu
-                    ref="menu"
-                    v-model="menu2"
-                    transition="scale-transition"
-                    :close-on-content-click="false"
-                    offset-y
-                    max-width="290px"
-                    min-width="290px"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn 
-                        text 
-                        v-on="on"
-                        v-bind="attrs"
-                      >
-                        {{ task.time }}
-                      </v-btn>  
-                    </template>
-                    <v-time-picker
-                      v-if="menu2"
-                      v-model="timeTmp"
-                      full-width
-                      @click:minute="updateTaskTime(index, timeTmp)"
-                    ></v-time-picker>
-                  </v-menu>
                 </v-card-title>
 
                 <v-card-text>
@@ -78,6 +51,62 @@
                     v-else
                     @blur="descChange = false"
                   ></v-textarea>
+                  <!-- DATE WITH DATE PICKER MENU ON CLICK --> 
+                  <v-menu
+                    ref="menu"
+                    v-model="task.dateInplaceMenu"
+                    transition="scale-transition"
+                    :close-on-content-click="false"
+                    offset-y
+                    max-width="290px"
+                    min-width="290px"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-btn 
+                        text 
+                        v-on="on"
+                        v-bind="attrs"
+                        class="pa-1"
+                      >
+                        {{ task.friendlyDate }}
+                      </v-btn>  
+                    </template>
+                    <v-date-picker
+                      v-if="task.dateInplaceMenu"
+                      v-model="task.friendlyDate"
+                      full-width
+                      @input="task.dateInplaceMenu = false"
+                    ></v-date-picker>
+                  </v-menu>
+                  <!-- TIME WITH TIME PICKER MENU ON CLICK --> 
+                  <v-menu
+                    ref="menu"
+                    v-model="task.timeInplaceMenu"
+                    transition="scale-transition"
+                    :close-on-content-click="false"
+                    offset-y
+                    max-width="290px"
+                    min-width="290px"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-btn 
+                        class="pa-1"
+                        text 
+                        v-on="on"
+                        v-bind="attrs"
+                      >
+                        {{ task.friendlyTime }}
+                      </v-btn>  
+                    </template>
+                    <v-time-picker
+                      v-if="task.timeInplaceMenu"
+                      v-model="task.friendlyTime"
+                      full-width
+                      format="24hr"
+                      @click:minute="task.timeInplaceMenu = false"
+                    ></v-time-picker>
+                  </v-menu>
+
                 </v-card-text>
                 
                 <v-card-actions>
@@ -120,22 +149,75 @@
                 v-model="taskTitle"
                 :error-messages="taskTitleErrors"
                 label="Tytuł"
+                prepend-icon="mdi-format-title"
                 required
                 @input="$v.taskTitle.$touch()"
                 @blur="$v.taskTitle.$touch()"
               ></v-text-field>
+
               <v-textarea 
                 v-model="taskDesc"
                 label="Opis" 
+                prepend-icon="mdi-subtitles-outline"
                 required
                 scrollable
               ></v-textarea>
             </v-form>
-            <v-time-picker
-              v-model="taskTime"
-              value="08:11"
-              format="24hr"
-            ></v-time-picker>
+
+            <v-menu
+              ref="menu"
+              v-model="timePickMenu"
+              transition="scale-transition"
+              :close-on-content-click="false"
+              offset-y
+              max-width="290px"
+              min-width="290px"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  v-model="taskFriendlyTime"
+                  label="Godzina"
+                  prepend-icon="mdi-clock-time-four-outline"
+                  readonly
+                  v-bind="attrs"
+                  v-on="on"
+                ></v-text-field>  
+              </template>
+              <v-time-picker
+                v-if="timePickMenu"
+                v-model="taskFriendlyTime"
+                full-width
+                format="24hr"
+                @click:minute="timePickMenu = false"
+              ></v-time-picker>
+            </v-menu>
+
+            <v-menu
+              ref="menu"
+              v-model="datePickMenu"
+              transition="scale-transition"
+              :close-on-content-click="false"
+              offset-y
+              max-width="290px"
+              min-width="290px"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  v-model="taskFriendlyDate"
+                  label="Data"
+                  prepend-icon="mdi-calendar"
+                  readonly
+                  v-bind="attrs"
+                  v-on="on"
+                ></v-text-field>  
+              </template>
+              <v-date-picker
+                v-if="datePickMenu"
+                v-model="taskFriendlyDate"
+                full-width
+                @input="datePickMenu = false"
+              ></v-date-picker>
+            </v-menu>
           </v-card-text>
 
           <v-card-actions>
@@ -169,7 +251,7 @@
     <v-footer
       color="primary lighten-1 white--text"
     >
-      <div class="ma-4">Następne zadanie: {{ nextTask }}</div>
+      <div class="ma-4">{{ nextTask }}</div>
     </v-footer>
 
   </v-app>
@@ -193,19 +275,19 @@ export default {
       return errors
     },
     nextTask() {
-      const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes()
-      console.log("current minutes: " + currentMinutes)
-      var index
-      var tmpMinutes = 100000
-      for (var i = 0; i < this.tasks.length; i++) {
-        const taskMinutes = parseInt(this.tasks[i].time.substr(0, 2)) * 60 + parseInt(this.tasks[i].time.substr(3, 2))
-        if (taskMinutes - currentMinutes < tmpMinutes) {
+      const currentTime = new Date().getTime()
+      let index
+      let timeDeviation = currentTime
+      for (let i = 0; i < this.tasks.length; i++) {
+        if (this.tasks[i].time.getTime() - currentTime < timeDeviation) {
           index = i
-          tmpMinutes = taskMinutes - currentMinutes
-          console.log("task " + this.tasks[i].title + " minutes: " + taskMinutes + " tmpMinutes: " + tmpMinutes)
+          timeDeviation = this.tasks[i].time.getTime() - currentTime
         }
       }
-      return this.tasks[index].title
+      if (timeDeviation == currentTime) {
+        return 'Wszystko zrobione :)'
+      } 
+      return 'Następne zadanie: ' + this.tasks[index].title
     }
   },
 
@@ -215,19 +297,28 @@ export default {
 
   data: () => ({
     overlay: false,
-    menu2: false,
-    timeTmp: null,
 
     titleChange: false,
     descChange: false,
 
+    timePickMenu: false,
+    datePickMenu: false,
+
+    taskFriendlyTime: '10:00',
+    taskFriendlyDate: '2021-09-09',
+    taskTime: new Date(),
     taskTitle: '',
     taskDesc: '',
-    taskTime: new Date().getHours() + ":" + new Date().getMinutes(),
+
+
     tasks: [{
-      time: '23:59',
+      time: new Date(),
+      friendlyTime: '10:00',
+      friendlyDate: '2021-09-09',
       title: 'Naglowek',
-      desc: 'To jest piekny opis'
+      desc: 'To jest piekny opis',
+      timeInplaceMenu: false,
+      dateInplaceMenu: false,
     }],
     doneTasks: [],
   }),
@@ -235,7 +326,22 @@ export default {
     saveTask(){
       this.$v.$touch()
       if (!this.$v.$invalid) {
-        this.tasks.push({time: this.taskTime, title: this.taskTitle, desc: this.taskDesc})
+        console.log("Friendly Date: " + this.taskFriendlyDate)
+        let taskTime = new Date()
+        taskTime.setFullYear(this.taskFriendlyDate.substr(0, 4))
+        taskTime.setMonth(parseInt(this.taskFriendlyDate.substr(5, 2)) - 1)
+        taskTime.setDate(this.taskFriendlyDate.substr(8, 2))
+        taskTime.setHours(this.taskFriendlyTime.substr(0, 2))
+        taskTime.setMinutes(this.taskFriendlyTime.substr(3, 2))
+        console.log(taskTime)
+
+        this.tasks.push({
+          time: taskTime, 
+          friendlyTime: this.taskFriendlyTime,
+          friendlyDate: this.taskFriendlyDate,
+          title: this.taskTitle, 
+          desc: this.taskDesc
+        })
         this.overlay = false
         this.taskTitle = ''
         this.taskDesc = ''
@@ -251,10 +357,6 @@ export default {
     },
     archiveTask(index) {
       this.doneTasks.push(this.tasks.splice(index, 1))
-    },
-    updateTaskTime(index, time) {
-      this.tasks[index].time = time
-      this.menu2 = false
     },
   }
 };
