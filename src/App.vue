@@ -15,7 +15,7 @@
           <!-- TASK CARD -->
           <v-col
             v-for="(task, index) in tasks"
-            :key="index"
+            :key="task.title"
             cols="12"
             sm="4"
           >
@@ -26,8 +26,8 @@
               >
                 <v-card-title>
                   <div 
-                    v-if="!titleChange"
-                    @click="titleChange = true"
+                    v-if="!task.titleChange"
+                    @click="task.titleChange = true"
                     class="card-title"
                   >
                     {{ task.title }}
@@ -35,21 +35,21 @@
                   <v-text-field
                     v-else
                     v-model="task.title"
-                    @blur="titleChange = false"
+                    @blur="task.titleChange = false"
                   ></v-text-field>
                 </v-card-title>
 
                 <v-card-text>
                   <div
-                    v-if="!descChange"
-                    @click="descChange = true"
+                    v-if="!task.descChange"
+                    @click="task.descChange = true"
                   >
                     {{ task.desc }}
                   </div>
                   <v-textarea 
                     v-model="task.desc"
                     v-else
-                    @blur="descChange = false"
+                    @blur="task.descChange = false"
                   ></v-textarea>
                   <!-- DATE WITH DATE PICKER MENU ON CLICK --> 
                   <v-menu
@@ -75,7 +75,7 @@
                       v-if="task.dateInplaceMenu"
                       v-model="task.friendlyDate"
                       full-width
-                      @input="task.dateInplaceMenu = false"
+                      @input="updateTaskDate(index, task.friendlyDate)"
                     ></v-date-picker>
                   </v-menu>
                   <!-- TIME WITH TIME PICKER MENU ON CLICK --> 
@@ -103,7 +103,7 @@
                       v-model="task.friendlyTime"
                       full-width
                       format="24hr"
-                      @click:minute="task.timeInplaceMenu = false"
+                      @click:minute="updateTaskTime(index, task.friendlyTime)"
                     ></v-time-picker>
                   </v-menu>
 
@@ -251,7 +251,9 @@
     <v-footer
       color="primary lighten-1 white--text"
     >
-      <div class="ma-4">{{ nextTask }}</div>
+      <div 
+        class="ma-4"
+      >{{ nextTask }}</div>
     </v-footer>
 
   </v-app>
@@ -275,6 +277,8 @@ export default {
       return errors
     },
     nextTask() {
+      this.nextTaskUpdater
+
       const currentTime = new Date().getTime()
       let index
       let timeDeviation = currentTime
@@ -298,8 +302,7 @@ export default {
   data: () => ({
     overlay: false,
 
-    titleChange: false,
-    descChange: false,
+    nextTaskUpdater: 0,
 
     timePickMenu: false,
     datePickMenu: false,
@@ -319,11 +322,13 @@ export default {
       desc: 'To jest piekny opis',
       timeInplaceMenu: false,
       dateInplaceMenu: false,
+      titleChange: false,
+      descChange: false,
     }],
     doneTasks: [],
   }),
   methods: {
-    saveTask(){
+    saveTask() {
       this.$v.$touch()
       if (!this.$v.$invalid) {
         console.log("Friendly Date: " + this.taskFriendlyDate)
@@ -346,6 +351,28 @@ export default {
         this.taskTitle = ''
         this.taskDesc = ''
       }
+    },
+    updateTaskTime(index, friendlyTime) {
+      let taskTime = this.tasks[index].time
+      taskTime.setHours(friendlyTime.substr(0, 2))
+      taskTime.setMinutes(friendlyTime.substr(3, 2))
+
+      this.tasks[index].time = taskTime
+      this.tasks[index].timeInplaceMenu = false
+
+      this.nextTaskUpdater++
+    },
+    updateTaskDate(index, friendlyDate) {
+      let taskTime = this.tasks[index].time
+      taskTime.setFullYear(friendlyDate.substr(0, 4))
+      taskTime.setMonth(parseInt(friendlyDate.substr(5, 2)) - 1)
+      taskTime.setDate(friendlyDate.substr(8, 2))
+
+      
+      this.tasks[index].time = taskTime
+      this.tasks[index].dateInplaceMenu = false
+
+      this.nextTaskUpdater++
     },
     cancelTaskAdding() {
       this.overlay = false
