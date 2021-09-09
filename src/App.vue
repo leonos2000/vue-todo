@@ -26,30 +26,29 @@
               >
                 <v-card-title>
                   <div 
-                    v-if="!task.titleChange"
-                    @click="task.titleChange = true"
-                    class="card-title"
+                    v-if="!task.titleInplaceChange"
+                    @click="task.titleInplaceChange = true"
                   >
                     {{ task.title }}
                   </div>
                   <v-text-field
                     v-else
-                    v-model="task.title"
-                    @blur="task.titleChange = false"
+                    :value="task.title"
+                    @blur="updateTitle(index, $event)"
                   ></v-text-field>
                 </v-card-title>
 
                 <v-card-text>
                   <div
-                    v-if="!task.descChange"
-                    @click="task.descChange = true"
+                    v-if="!task.descInplaceChange"
+                    @click="task.descInplaceChange = true"
                   >
                     {{ task.desc }}
                   </div>
                   <v-textarea 
                     v-model="task.desc"
                     v-else
-                    @blur="task.descChange = false"
+                    @blur="task.descInplaceChange = false"
                   ></v-textarea>
                   <!-- DATE WITH DATE PICKER MENU ON CLICK --> 
                   <v-menu
@@ -322,8 +321,8 @@ export default {
       desc: 'To jest piekny opis',
       timeInplaceMenu: false,
       dateInplaceMenu: false,
-      titleChange: false,
-      descChange: false,
+      titleInplaceChange: false,
+      descInplaceChange: false,
     }],
     doneTasks: [],
   }),
@@ -374,6 +373,12 @@ export default {
 
       this.nextTaskUpdater++
     },
+    updateTitle(index, event) {
+      this.tasks[index].title = event.target.value
+      this.tasks[index].titleInplaceChange = false
+
+      this.nextTaskUpdater++
+    },
     cancelTaskAdding() {
       this.overlay = false
       this.taskTitle = ''
@@ -390,7 +395,4 @@ export default {
 </script>
 
 <style scoped>
-.card-title {
-  width: 50%;
-}
 </style>
