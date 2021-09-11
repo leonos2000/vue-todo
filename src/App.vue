@@ -67,7 +67,7 @@
                         v-bind="attrs"
                         class="pa-1"
                       >
-                        {{ task.friendlyDate }}
+                        {{ showDaysToTask(task.time) }},
                       </v-btn>  
                     </template>
                     <v-date-picker
@@ -94,7 +94,7 @@
                         v-on="on"
                         v-bind="attrs"
                       >
-                        {{ task.friendlyTime }}
+                        godzina {{ task.friendlyTime }}
                       </v-btn>  
                     </template>
                     <v-time-picker
@@ -241,7 +241,7 @@
       fixed
       right
       bottom
-      @click="overlay = !overlay"
+      @click="openOverlay()"
     >
       <v-icon>mdi-plus</v-icon>
     </v-btn>
@@ -287,7 +287,7 @@ export default {
           timeDeviation = this.tasks[i].time.getTime() - currentTime
         }
       }
-      if (timeDeviation == currentTime) {
+      if ((timeDeviation == currentTime) || (timeDeviation <= 0)) {
         return 'Wszystko zrobione :)'
       } 
       return 'Następne zadanie: ' + this.tasks[index].title
@@ -308,17 +308,19 @@ export default {
 
     taskFriendlyTime: '10:00',
     taskFriendlyDate: '2021-09-09',
-    taskTime: new Date(),
+    taskTime: null,
     taskTitle: '',
     taskDesc: '',
 
 
     tasks: [{
       time: new Date(),
-      friendlyTime: '10:00',
-      friendlyDate: '2021-09-09',
+      friendlyTime: '10:10',
+      friendlyDate: '2021-09-12',
+
       title: 'Naglowek',
       desc: 'To jest piekny opis',
+
       timeInplaceMenu: false,
       dateInplaceMenu: false,
       titleInplaceChange: false,
@@ -327,6 +329,37 @@ export default {
     doneTasks: [],
   }),
   methods: {
+    openOverlay() {
+      this.overlay = true
+
+      const currentTime = new Date()
+      this.taskFriendlyTime = currentTime.getHours() + ":" + currentTime.getMinutes()
+      this.taskFriendlyDate = currentTime.getFullYear() + "-" + (currentTime.getMonth() + 1) + "-" + currentTime.getDate()
+    },
+    showDaysToTask(taskTime) {
+      const currentTime = new Date().getTime()
+
+      const timeToTask = taskTime.getTime() - currentTime
+      let nextDay = new Date(taskTime)
+      nextDay.setDate(taskTime.getDate + 1)
+      nextDay.setMinutes(0)
+      nextDay.setHours(0)
+      const timeToEndOfDay = nextDay - taskTime.getTime()
+      
+      const daysToTask = Math.floor(timeToTask / (24*60*60*1000))
+
+      if (timeToTask < 0) {
+        return "spóźnione"
+      } else if (daysToTask == 0 && (timeToEndOfDay > timeToTask)) {
+        return "Dzisiaj"
+      } else if ((daysToTask == 1 && (timeToEndOfDay < (timeToTask - (24*60*60*1000)))) || (daysToTask == 0)) {
+        return "Jutro"
+      } else if (daysToTask == 1) {
+        return "Za 2 dni"
+      } else {
+        return "Za " + daysToTask + " dni"
+      }
+    },
     saveTask() {
       this.$v.$touch()
       if (!this.$v.$invalid) {
