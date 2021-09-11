@@ -324,8 +324,22 @@ export default {
       this.overlay = true
 
       const currentTime = new Date()
-      this.taskFriendlyTime = currentTime.getHours() + ":" + currentTime.getMinutes()
-      this.taskFriendlyDate = currentTime.getFullYear() + "-" + (currentTime.getMonth() + 1) + "-" + currentTime.getDate()
+      let currentHours = ''
+      let currentMinutes = ''
+      let currentMonth = ''
+      let currentDay = ''
+
+      if (currentTime.getMinutes() < 10) currentMinutes = '0' + currentTime.getMinutes()
+      else currentMinutes = currentTime.getMinutes()
+      if (currentTime.getHours() < 10) currentHours = '0' + currentTime.getHours()
+      else currentHours = currentTime.getHours()
+      if (currentTime.getMonth() < 9) currentMonth = '0' + (currentTime.getMonth() + 1)
+      else currentMonth = (currentTime.getMonth() + 1)
+      if (currentTime.getDate() < 10) currentDay = '0' + currentTime.getDate()
+      else currentDay = currentTime.getDate()
+
+      this.taskFriendlyTime = currentHours + ":" + currentMinutes
+      this.taskFriendlyDate = currentTime.getFullYear() + "-" + currentMonth + "-" + currentDay
     },
     showDaysToTask(taskTime) {
       const currentTime = new Date().getTime()
@@ -361,7 +375,6 @@ export default {
         taskTime.setDate(this.taskFriendlyDate.substr(8, 2))
         taskTime.setHours(this.taskFriendlyTime.substr(0, 2))
         taskTime.setMinutes(this.taskFriendlyTime.substr(3, 2))
-        console.log(taskTime)
 
         this.tasks.push({
           time: taskTime, 
