@@ -234,15 +234,6 @@
   >
     <v-icon>mdi-plus</v-icon>
   </v-btn>
-  
-    <!-- SNACKBAR WITH NEXT TASK -->
-    <v-snackbar 
-      value="true"
-      timeout="-1"
-    >
-    <div class="text-center">{{ nextTask }}</div>
-    </v-snackbar>
-
   </v-container>
 </template>
 
@@ -262,26 +253,6 @@ export default {
         if (!this.$v.taskTitle.$dirty) return errors
         !this.$v.taskTitle.required && errors.push('Pole wymagane')
       return errors
-    },
-    nextTask() {
-      this.nextTaskUpdater
-
-      const currentTime = new Date().getTime()
-      let index
-      let timeDeviation = currentTime
-      for (let i = 0; i < this.tasks.length; i++) {
-        if (this.tasks[i].time.getTime() - currentTime < timeDeviation) {
-          index = i
-          timeDeviation = this.tasks[i].time.getTime() - currentTime
-        }
-      }
-      if ((timeDeviation == currentTime) || (timeDeviation <= 0)) {
-        return 'Wszystko zrobione'
-      } 
-      return 'Następne zadanie: ' + 
-        this.tasks[index].title + ' ' + 
-        this.showDaysToTask(this.tasks[index].time) + ' o ' + 
-        this.tasks[index].friendlyTime
     }
   },
 
@@ -291,8 +262,6 @@ export default {
 
   data: () => ({
     overlay: false,
-
-    nextTaskUpdater: 0,
 
     timePickMenu: false,
     datePickMenu: false,
@@ -346,10 +315,11 @@ export default {
 
       const timeToTask = taskTime.getTime() - currentTime
       let nextDay = new Date(taskTime)
-      nextDay.setDate(taskTime.getDate + 1)
+      nextDay.setDate(taskTime.getDate() + 1)
       nextDay.setMinutes(0)
       nextDay.setHours(0)
-      const timeToEndOfDay = nextDay - taskTime.getTime()
+      const timeToEndOfDay = nextDay.getTime() - taskTime.getTime()
+      console.log(timeToEndOfDay)
       
       const daysToTask = Math.floor(timeToTask / (24*60*60*1000))
 
@@ -386,6 +356,8 @@ export default {
         this.overlay = false
         this.taskTitle = ''
         this.taskDesc = ''
+
+        this.sortTasks()
       }
     },
     updateTaskTime(index, friendlyTime) {
@@ -396,25 +368,24 @@ export default {
       this.tasks[index].time = taskTime
       this.tasks[index].timeInplaceMenu = false
 
-      this.nextTaskUpdater++
+      this.sortTasks()
     },
     updateTaskDate(index, friendlyDate) {
       let taskTime = this.tasks[index].time
       taskTime.setFullYear(friendlyDate.substr(0, 4))
       taskTime.setMonth(parseInt(friendlyDate.substr(5, 2)) - 1)
       taskTime.setDate(friendlyDate.substr(8, 2))
-
       
       this.tasks[index].time = taskTime
       this.tasks[index].dateInplaceMenu = false
 
-      this.nextTaskUpdater++
+      this.sortTasks()
     },
     updateTitle(index, event) {
       this.tasks[index].title = event.target.value
       this.tasks[index].titleInplaceChange = false
 
-      this.nextTaskUpdater++
+      this.sortTasks()
     },
     cancelTaskAdding() {
       this.overlay = false
@@ -423,10 +394,22 @@ export default {
     },
     deleteTask(index) {
       this.tasks.splice(index, 1)
+      this.sortTasks()
     },
     archiveTask(index) {
       this.doneTasks.push(this.tasks.splice(index, 1))
+      this.sortTasks()
     },
+    sortTasks() {
+      const currentTime = new Date().getTime()
+      this.tasks.sort((a, b) => {
+        const aTime = a.time.getTime()
+        const bTime = b.time.getTime()
+        if (aTime - currentTime < bTime - currentTime) return -1
+        else if (aTime - currentTime > bTime - currentTime) return 1
+        else return 0
+      })
+    }
   }
 };
 </script>
