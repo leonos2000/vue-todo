@@ -20,3 +20,22 @@
 
   </v-app>
 </template>
+
+<script>
+export default {
+  created() {
+    this.getCsrfTocken()
+  },
+
+  methods: {
+    async getCsrfTocken () {
+      try {
+        const data = await this.axios.get('/csrf/')
+        this.$store.commit('setCsrfToken', data.data.token)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  }
+}
+</script>
