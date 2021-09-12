@@ -319,7 +319,6 @@ export default {
       nextDay.setMinutes(0)
       nextDay.setHours(0)
       const timeToEndOfDay = nextDay.getTime() - taskTime.getTime()
-      console.log(timeToEndOfDay)
       
       const daysToTask = Math.floor(timeToTask / (24*60*60*1000))
 
