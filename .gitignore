@@ -21,3 +21,9 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# venv files
+/todo_backend/Include
+/todo_backend/Lib
+/todo_backend/Scripts
+/todo_backend/pyvenv.cfg
