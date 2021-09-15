@@ -1,6 +1,6 @@
 <template>
   <v-app>
-        <!-- APPBAR -->
+    <!-- APPBAR -->
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>TODO</v-toolbar-title>
       <v-spacer></v-spacer>
