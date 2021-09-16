@@ -119,7 +119,10 @@
 import { validationMixin } from 'vuelidate'
 import { required, minLength, maxLength, email, sameAs, helpers } from 'vuelidate/lib/validators'
 
-const regexPass = helpers.regex('pass', /^.*(?=.{8,40})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[~!@#$%^&*()_+{}":;'[\]]).*$/)
+const containSmallLetter = helpers.regex('containSmallLetter', /^.*[a-z]+.*$/)
+const containBigLetter = helpers.regex('containBigLetter', /^.*[A-Z]+.*$/)
+const containDigit = helpers.regex('containDigit', /^.*[0-9]+.*$/)
+const containSpecialChar = helpers.regex('containSpecialChar', /^.*[~`!@#$%^&*()_\-+={}":;,.'[/|\]?]+.*$/)
 
 export default {
   mixins: [validationMixin],
@@ -138,28 +141,38 @@ export default {
 
   computed: {
     usernameErrors() {
-      const errors = []
-        if (!this.$v.username.$dirty) return errors
-        !this.$v.username.required && errors.push('Pole wymagane')
-      return errors
+      if (this.$v.username.$dirty) {
+        if (!this.$v.username.required) return 'Pole wymagane'
+        else if (!this.$v.username.minLength) return 'Minimum 4 znaki'
+        else if (!this.$v.username.maxLength) return 'Maksimum 20 znaków'
+      }
+      return null
     },
     emailErrors() {
-      const errors = []
-        if (!this.$v.email.$dirty) return errors
-        !this.$v.email.required && errors.push('Pole wymagane')
-      return errors
+      if (this.$v.email.$dirty) {
+        if (!this.$v.email.required) return 'Pole wymagane'
+        else if (!this.$v.email.email) return 'Podaj prawidłowy email'
+      }
+      return null
     },
     passwordErrors() {
-      const errors = []
-        if (!this.$v.password.$dirty) return errors
-        !this.$v.password.required && errors.push('Pole wymagane')
-      return errors
+      if (this.$v.password.$dirty) {
+        if (!this.$v.password.required) return 'Pole wymagane'
+        else if (!this.$v.password.minLength) return 'Minimum 8 znaków'
+        else if (!this.$v.password.containSmallLetter) return 'Minimum jedna mała litera'
+        else if (!this.$v.password.containBigLetter) return 'Minimum jedna duża litera'
+        else if (!this.$v.password.containDigit) return 'Minimum jedna cyfra'
+        else if (!this.$v.password.containSpecialChar) return 'Minimum jeden znak specjalny'
+        else if (!this.$v.password.maxLength) return 'Maksimum 25 znaków'
+      }
+      return null
     },
     rePasswordErrors() {
-      const errors = []
-        if (!this.$v.rePassword.$dirty) return errors
-        !this.$v.rePassword.required && errors.push('Pole wymagane')
-      return errors
+      if (this.$v.rePassword.$dirty) {
+        if (!this.$v.rePassword.required) return 'Pole wymagane'
+        else if (!this.$v.rePassword.sameAs) return 'Hasła nie zgadzają się'
+      }
+      return null
     }
   },
 
@@ -167,7 +180,7 @@ export default {
     username: { 
       required, 
       minLength: minLength(4), 
-      maxLenght: maxLength(20) 
+      maxLength: maxLength(20) 
     },
     email: { 
       required,
@@ -175,11 +188,16 @@ export default {
     },
     password: { 
       required, 
-      regexPass
+      containSmallLetter,
+      containBigLetter,
+      containDigit,
+      containSpecialChar,
+      minLength: minLength(8), 
+      maxLength: maxLength(25) 
     },
     rePassword: { 
       required,
-      sameAsPassword: sameAs('password')
+      sameAs: sameAs('password')
     },
   },
 
