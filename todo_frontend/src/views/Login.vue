@@ -36,7 +36,7 @@
         <v-spacer/>
         <v-btn 
           color="info"
-          @click="submit(username, password)"
+          @click="submitLogin(username, password)"
         >
           Login
         </v-btn>
@@ -265,6 +265,7 @@ export default {
               this.emailExists = true
             } else if (registerStatus == 'success') {
               this.snackbarMessage = 'Activation link sent!'
+              this.showRegisterCard = 0
             this.snackbar = true
             } else {
               this.snackbarMessage = 'Internal error occured!'
