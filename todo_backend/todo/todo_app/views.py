@@ -65,17 +65,19 @@ def registerUser(request):
                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                     'token': account_activation_token.make_token(user),
                 })
-        send_mail('TODO aktywacja konta', message, None, ('leonpiotrczajka@gmail.com',))
+                
+        send_mail('TODO aaccount activation', message, None, ('leonpiotrczajka@gmail.com',))
 
-            
     return JsonResponse({'status': 'success'})
 
 def activate(request, uidb64, token):
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))
+        print(f'wczytano uid: {uid}, token: {token}')
         user = User.objects.get(pk=uid)
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
+    print(account_activation_token.check_token(user, token))
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()

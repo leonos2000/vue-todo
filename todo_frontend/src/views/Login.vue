@@ -111,6 +111,23 @@
         </v-btn>
       </v-card-actions>
     </v-card>
+
+    <v-snackbar
+      v-model="snackbar"
+    >
+    {{ snackbarMessage }}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          color="primary"
+          text
+          v-bind="attrs"
+          @click="snackbar = false"
+        >
+          OK
+        </v-btn>
+      </template>
+    </v-snackbar>
+
   </v-container>
 </template>
 
@@ -132,12 +149,17 @@ export default {
       showPassword: false,
       showRePassword: false,
       showRegisterCard: 0,
+
       username: null,
+      email: null,
       password: null,
       rePassword: null,
-      email: null,
+
       usernameExists: false,
       emailExists: false,
+
+      snackbar: false,
+      snackbarMessage: '',
     }
   },
 
@@ -241,9 +263,26 @@ export default {
               this.usernameExists = true
             } else if (registerStatus == 'email exists') {
               this.emailExists = true
+            } else if (registerStatus == 'success') {
+              this.snackbarMessage = 'Activation link sent!'
+            this.snackbar = true
+            } else {
+              this.snackbarMessage = 'Internal error occured!'
+            this.snackbar = true
             }
           }) 
-          .catch(errors => console.log(errors))
+          .catch(errors => {
+            console.error(errors)
+            this.snackbarMessage = 'Internal error occured!'
+            this.snackbar = true
+          })
+          .then(() => {
+            this.username = null
+            this.email = null
+            this.password = null
+            this.rePassword = null
+            this.$v.$reset()
+          })
       }
     },
     usernameChanged() {
