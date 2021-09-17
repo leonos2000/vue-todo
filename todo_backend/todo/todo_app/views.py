@@ -1,9 +1,16 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.middleware import csrf
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.models import User
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_text
+from django.core.mail import send_mail
 import re
+
+from .tokens import account_activation_token
 
 # Create your views here.
 
@@ -26,12 +33,12 @@ def loginUser(request):
 
 def registerUser(request):
     if request.method == 'POST':
-        password = request.POST.get('password')
-        print(f'password: {password}')
-        email = request.POST.get('email')
-        print(f'email: {email}')
-        username = request.POST.get('username')
-        print(f'username: {username}')
+        try:
+            password = request.POST.get('password')
+            email = request.POST.get('email')
+            username = request.POST.get('username')
+        except:
+            return JsonResponse({'status': 'POST error'})
 
         if not re.search(r"^.*(?=.{8,40})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[~!@#$%^&*()_+{}\":;'[\]]).*$", password):
             return JsonResponse({'status': 'password error'})
@@ -39,8 +46,39 @@ def registerUser(request):
             return JsonResponse({'status': 'username error'})
         if not re.search(r"^\w{1,30}@.{3,30}$", email):
             return JsonResponse({'status': 'email error'})
-        # user = User.objects.create_user(username=username,
-        #                                 email=email,
-        #                                 password=password)
+
+        if User.objects.filter(username__iexact=username):
+            return JsonResponse({'status': 'username exists'})
+        if User.objects.filter(email__iexact=email):
+            return JsonResponse({'status': 'email exists'})
+        
+        user = User.objects.create_user(username=username,
+                                        email=email,
+                                        password=password)
+        
+        user.is_active = False
+
+        current_site = get_current_site(request)
+        message = render_to_string('email_token.html', {
+                    'user': user,
+                    'domain': current_site.domain,
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                    'token': account_activation_token.make_token(user),
+                })
+        send_mail('TODO aktywacja konta', message, None, ('leonpiotrczajka@gmail.com',))
+
             
     return JsonResponse({'status': 'success'})
+
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
+    else:
+        return HttpResponse('Activation link is invalid!')

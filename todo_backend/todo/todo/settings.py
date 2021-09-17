@@ -11,16 +11,21 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+with open(BASE_DIR / 'sensitive.json', 'r') as f:
+    sensitiveData = json.loads(f.read())
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-916ubvdzwyt*@q1fnj5z*&@@h$+1h-73wuu!^a4d1lv+a#03)a'
+SECRET_KEY = sensitiveData['secret']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -100,6 +105,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = sensitiveData['originEmail']
+EMAIL_HOST_PASSWORD = sensitiveData['originEmailPassword']
+DEFAULT_FROM_EMAIL = sensitiveData['originEmail']
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

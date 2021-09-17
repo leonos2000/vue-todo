@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-card
-      v-if="!showRegisterCard"
+      v-if="showRegisterCard == 0"
       width="400"
       class="mx-auto mt-5"
     >
@@ -29,7 +29,7 @@
       <v-card-actions>
         <v-btn 
           color="success"
-          @click="showRegisterCard = true"
+          @click="showRegisterCard = 1"
         >
           Register
         </v-btn>
@@ -44,7 +44,7 @@
     </v-card>
 
     <v-card
-      v-else
+      v-else-if="showRegisterCard == 1"
       width="400"
       class="mx-auto mt-5"
     >
@@ -58,16 +58,16 @@
             v-model="username"
             prepend-icon="mdi-account-circle"
             required
-            @input="$v.username.$touch()"
-            @blur="$v.username.$touch()"
+            @input="usernameChanged()"
+            @blur="usernameChanged()"
             :error-messages="usernameErrors"
           />
           <v-text-field 
             label="Email"
             v-model="email"
             prepend-icon="mdi-email"
-            @input="$v.email.$touch()"
-            @blur="$v.email.$touch()"
+            @input="emailChanged()"
+            @blur="emailChanged()"
             :error-messages="emailErrors"
           />
           <v-text-field 
@@ -98,7 +98,7 @@
       <v-card-actions>
         <v-btn 
           color="info"
-          @click="showRegisterCard = false"
+          @click="showRegisterCard = 0"
         >
           Login
         </v-btn>
@@ -131,11 +131,13 @@ export default {
     return {
       showPassword: false,
       showRePassword: false,
-      showRegisterCard: false,
+      showRegisterCard: 0,
       username: null,
       password: null,
       rePassword: null,
       email: null,
+      usernameExists: false,
+      emailExists: false,
     }
   },
 
@@ -145,6 +147,7 @@ export default {
         if (!this.$v.username.required) return 'Pole wymagane'
         else if (!this.$v.username.minLength) return 'Minimum 4 znaki'
         else if (!this.$v.username.maxLength) return 'Maksimum 20 znaków'
+        else if (!this.$v.username.usernameExistsValidate) return 'Username already exists'
       }
       return null
     },
@@ -152,6 +155,7 @@ export default {
       if (this.$v.email.$dirty) {
         if (!this.$v.email.required) return 'Pole wymagane'
         else if (!this.$v.email.email) return 'Podaj prawidłowy email'
+        else if (!this.$v.email.emailExistsValidate) return 'Email already exists'
       }
       return null
     },
@@ -180,11 +184,17 @@ export default {
     username: { 
       required, 
       minLength: minLength(4), 
-      maxLength: maxLength(20) 
+      maxLength: maxLength(20),
+      usernameExistsValidate() {
+        return !this.usernameExists
+      }
     },
     email: { 
       required,
-      email
+      email,
+      emailExistsValidate() {
+        return !this.emailExists
+      }
     },
     password: { 
       required, 
@@ -214,16 +224,35 @@ export default {
         .catch(errors => console.log(errors))
     },
     submitRegister(username, email, password) {
-      let data = new FormData()
+      this.$v.$touch()
+      console.error('kurwa')
+      if (!this.$v.$invalid) {
+        let data = new FormData()
 
-      data.append('username', username)
-      data.append('email', email)
-      data.append('password', password)
-      data.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
+        data.append('username', username)
+        data.append('email', email)
+        data.append('password', password)
+        data.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
 
-      this.axios.post('/login/register/', data)
-        .then(res => console.error(res.data.status))
-        .catch(errors => console.log(errors))
+        this.axios.post('/login/register/', data)
+          .then(res => {
+            let registerStatus = res.data.status
+            if (registerStatus == 'username exists') {
+              this.usernameExists = true
+            } else if (registerStatus == 'email exists') {
+              this.emailExists = true
+            }
+          }) 
+          .catch(errors => console.log(errors))
+      }
+    },
+    usernameChanged() {
+      this.usernameExists = false
+      this.$v.username.$touch()
+    },
+    emailChanged() {
+      this.emailExists = false
+      this.$v.email.$touch()
     },
   }
 }
