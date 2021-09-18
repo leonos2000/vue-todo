@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.http import JsonResponse, HttpResponse
 from django.middleware import csrf
 from django.contrib.auth import authenticate, login
@@ -8,6 +8,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.core.mail import send_mail
+from urllib.parse import urlencode
 import re
 
 from .tokens import account_activation_token
@@ -15,11 +16,13 @@ from .tokens import account_activation_token
 # Create your views here.
 
 def appView(request):
-    return render(request, 'base.html')
+    pageType = request.GET.get('pageType')
+    context = {
+        'token': csrf.get_token(request),
+        'pageType': 'default' if pageType is None else pageType,
+    }
 
-def putCsrfToken(request):
-    token = csrf.get_token(request)
-    return JsonResponse({'token': token})
+    return render(request, 'base.html', context={'json': context})
 
 def loginUser(request):
     if request.method == 'POST':
@@ -54,9 +57,8 @@ def registerUser(request):
         
         user = User.objects.create_user(username=username,
                                         email=email,
-                                        password=password)
-        
-        user.is_active = False
+                                        password=password,
+                                        is_active=False)
 
         current_site = get_current_site(request)
         message = render_to_string('email_token.html', {
@@ -66,7 +68,7 @@ def registerUser(request):
                     'token': account_activation_token.make_token(user),
                 })
 
-        send_mail('TODO aaccount activation', message, None, ('leonpiotrczajka@gmail.com',))
+        send_mail('TODO account activation', message, None, ('leonpiotrczajka@gmail.com',))
 
     return JsonResponse({'status': 'success'})
 
@@ -76,10 +78,18 @@ def activate(request, uidb64, token):
         user = User.objects.get(pk=uid)
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
-    print(account_activation_token.check_token(user, token))
-    if user is not None and account_activation_token.check_token(user, token):
+    if user is None:
+        pageType = 'badActivationLink'
+    elif user.is_active:
+        pageType = 'alreadyActivated'
+    elif account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
-        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
+        pageType = 'successfullyActivated'
     else:
-        return HttpResponse('Activation link is invalid!')
+        pageType = 'badActivationLink'
+        
+    query_string =  urlencode({'pageType': pageType})
+    url = f'/login/?{query_string}'
+
+    return redirect(url)

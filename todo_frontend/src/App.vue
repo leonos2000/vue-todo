@@ -23,19 +23,12 @@
 
 <script>
 export default {
-  created() {
-    this.getCsrfTocken()
-  },
+  mounted() {
+    let context = JSON.parse(document.getElementById('contextJson').textContent)
 
-  methods: {
-    async getCsrfTocken () {
-      try {
-        const data = await this.axios.get('/csrf/')
-        this.$store.commit('setCsrfToken', data.data.token)
-      } catch (error) {
-        console.error(error)
-      }
-    }
+    console.log(context.pageType)
+    this.$store.commit('setPageType', context.pageType)
+    this.$store.commit('setCsrfToken', context.token)
   }
 }
 </script>

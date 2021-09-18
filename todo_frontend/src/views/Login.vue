@@ -114,6 +114,7 @@
 
     <v-snackbar
       v-model="snackbar"
+      :color="snackbarColor"
     >
     {{ snackbarMessage }}
       <template v-slot:action="{ attrs }">
@@ -144,6 +145,22 @@ const containSpecialChar = helpers.regex('containSpecialChar', /^.*[~`!@#$%^&*()
 export default {
   mixins: [validationMixin],
 
+  mounted() {
+    if (this.$store.state.pageType == 'successfullyActivated') {
+      this.snackbarMessage = 'Succesfully activated! Now you can log in'
+      this.snackbarColor = 'success'
+      this.snackbar = true
+    } else if (this.$store.state.pageType == 'badActivationLink') {
+      this.snackbarMessage = 'Bad activation link'
+      this.snackbarColor = 'error'
+      this.snackbar = true
+    } else if (this.$store.state.pageType == 'alreadyActivated') {
+      this.snackbarMessage = 'Account already activated'
+      this.snackbarColor = 'warning'
+      this.snackbar = true
+    }
+  },
+
   data() {
     return {
       showPassword: false,
@@ -160,6 +177,7 @@ export default {
 
       snackbar: false,
       snackbarMessage: '',
+      snackbarColor: 'info',
     }
   },
 
@@ -247,7 +265,6 @@ export default {
     },
     submitRegister(username, email, password) {
       this.$v.$touch()
-      console.error('kurwa')
       if (!this.$v.$invalid) {
         let data = new FormData()
 
@@ -264,17 +281,20 @@ export default {
             } else if (registerStatus == 'email exists') {
               this.emailExists = true
             } else if (registerStatus == 'success') {
-              this.snackbarMessage = 'Activation link sent!'
               this.showRegisterCard = 0
-            this.snackbar = true
+              this.snackbarMessage = 'Activation link sent!'
+              this.snackbarColor = 'info'
+              this.snackbar = true
             } else {
               this.snackbarMessage = 'Internal error occured!'
-            this.snackbar = true
+              this.snackbarColor = 'error'
+              this.snackbar = true
             }
           }) 
           .catch(errors => {
             console.error(errors)
             this.snackbarMessage = 'Internal error occured!'
+            this.snackbarMessage = 'error'
             this.snackbar = true
           })
           .then(() => {
