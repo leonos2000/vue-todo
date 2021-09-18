@@ -1,6 +1,6 @@
 from django.urls import path, include, re_path
 
-from .views import appView, loginUser, registerUser, activate
+from .views import appView, loginUser, registerUser, activate, saveTask
 
 urlpatterns = [
     path('', appView, name='default'),
@@ -8,5 +8,6 @@ urlpatterns = [
     path('login/login/', loginUser),
     path('login/register/', registerUser),
     path('login/activate/<uidb64>/<token>/', activate, name='activate'),
-    path('activate/', appView)
+    path('activate/', appView),
+    path('saveTask/', saveTask),
 ]

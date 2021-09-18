@@ -5,7 +5,7 @@
       <!-- TASK CARD -->
       <v-col
         v-for="(task, index) in tasks"
-        :key="task.title"
+        :key="task.index"
         cols="12"
         sm="4"
       >
@@ -352,11 +352,24 @@ export default {
           title: this.taskTitle, 
           desc: this.taskDesc
         })
+        this.sortTasks()
         this.overlay = false
+
+        let taskData = new FormData()
+        taskData.append('title', this.taskTitle)
+        taskData.append('desc', this.taskDesc)
+        taskData.append('timestamp', taskTime.getTime())
+        taskData.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
+
+        this.axios.post('/saveTask/', taskData)
+          .then(res => {
+            console.log(res)
+          })
+          .catch(err => {
+            console.error(err)
+          })
         this.taskTitle = ''
         this.taskDesc = ''
-
-        this.sortTasks()
       }
     },
     updateTaskTime(index, friendlyTime) {

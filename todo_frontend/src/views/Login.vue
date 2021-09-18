@@ -260,7 +260,12 @@ export default {
       data.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
 
       this.axios.post('/login/login/', data)
-        .then(res => alert('Form Submitted' + res))
+        .then(res => {
+          if (res.data.status == 'success') {
+            this.$store.commit('auth')
+            this.$router.push('Dashboard')
+          }
+        })
         .catch(errors => console.log(errors))
     },
     submitRegister(username, email, password) {

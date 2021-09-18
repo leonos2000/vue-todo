@@ -1,5 +1,9 @@
+import json
+import datetime
+import re
+
 from django.shortcuts import redirect, render
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.middleware import csrf
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
@@ -8,12 +12,12 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.core.mail import send_mail
+
 from urllib.parse import urlencode
-import re
 
 from .tokens import account_activation_token
+from .models import Task
 
-# Create your views here.
 
 def appView(request):
     pageType = request.GET.get('pageType')
@@ -21,8 +25,24 @@ def appView(request):
         'token': csrf.get_token(request),
         'pageType': 'default' if pageType is None else pageType,
     }
-
     return render(request, 'base.html', context={'json': context})
+
+def getUserData(request):
+
+    return JsonResponse({'test': 'test'})
+
+def saveTask(request):
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            task = Task()
+            task.title = request.POST.get('title')
+            task.desc = request.POST.get('desc')
+            task.date = datetime.datetime.fromtimestamp(int(request.POST.get('timestamp'))/1000)
+            task.user = request.user
+            task.save()
+            return JsonResponse({'status': 'success'})
+        
+    return JsonResponse({'status': 'error'})
 
 def loginUser(request):
     if request.method == 'POST':
@@ -32,7 +52,8 @@ def loginUser(request):
         user = authenticate(username=request.POST.get('username'), password=request.POST.get('password'))
         login(request, user)
 
-    return JsonResponse({'status': 'Success'})
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'})
 
 def registerUser(request):
     if request.method == 'POST':
