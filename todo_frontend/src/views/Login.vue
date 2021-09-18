@@ -259,11 +259,20 @@ export default {
       data.append('password', password)
       data.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
 
+      console.log(this.$store.state.csrfToken)
+
       this.axios.post('/login/login/', data)
         .then(res => {
           if (res.data.status == 'success') {
             this.$store.commit('auth')
-            this.$router.push('Dashboard')
+
+            this.axios.get('/getUser/')
+              .then(res => {
+                this.$store.commit('setCsrfToken', res.data.token)
+                console.log(res.data)
+              })
+
+            this.$router.push({ name: 'Dashboard'})
           }
         })
         .catch(errors => console.log(errors))

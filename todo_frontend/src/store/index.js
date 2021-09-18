@@ -8,9 +8,7 @@ export default new Vuex.Store({
     csrfToken: 'test',
     pageType: 0,
     authenticated: false,
-    userData: {
-
-    }
+    userTasks: []
   },
   mutations: {
     setCsrfToken(state, token) {
@@ -24,6 +22,9 @@ export default new Vuex.Store({
     },
     deAuth(state) {
       state.authenticated = false
+    },
+    addTask(state, taskObject) {
+      state.userTasks.push(taskObject)
     }
   },
   actions: {

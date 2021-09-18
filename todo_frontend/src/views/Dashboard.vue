@@ -272,7 +272,6 @@ export default {
     taskTitle: '',
     taskDesc: '',
 
-
     tasks: [{
       time: new Date(),
       friendlyTime: '10:10',
@@ -360,6 +359,8 @@ export default {
         taskData.append('desc', this.taskDesc)
         taskData.append('timestamp', taskTime.getTime())
         taskData.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
+
+        console.log(this.$store.state.csrfToken)
 
         this.axios.post('/saveTask/', taskData)
           .then(res => {

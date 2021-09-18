@@ -21,6 +21,8 @@ from .models import Task
 
 def appView(request):
     pageType = request.GET.get('pageType')
+    print(csrf.get_token(request))
+    print(csrf.get_token(request))
     context = {
         'token': csrf.get_token(request),
         'pageType': 'default' if pageType is None else pageType,
@@ -28,12 +30,17 @@ def appView(request):
     return render(request, 'base.html', context={'json': context})
 
 def getUserData(request):
+    if request.user.is_authenticated:
+        for i in Task.objects.filter(user=request.user):
+            print(i)
 
-    return JsonResponse({'test': 'test'})
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'})
 
 def saveTask(request):
-    if request.user.is_authenticated:
-        if request.method == 'POST':
+    if request.method == 'POST':
+        print(request.user.id)
+        if request.user.is_authenticated:
             task = Task()
             task.title = request.POST.get('title')
             task.desc = request.POST.get('desc')
@@ -51,8 +58,12 @@ def loginUser(request):
 
         user = authenticate(username=request.POST.get('username'), password=request.POST.get('password'))
         login(request, user)
+        print(csrf.get_token(request))
 
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'token': csrf.get_token(request)
+            })
     return JsonResponse({'status': 'error'})
 
 def registerUser(request):
