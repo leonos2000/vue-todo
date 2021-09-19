@@ -4,7 +4,7 @@
     <v-row no-gutters>
       <!-- TASK CARD -->
       <v-col
-        v-for="(task, index) in tasks"
+        v-for="(task, index) in $store.state.tasks"
         :key="task.index"
         cols="12"
         sm="4"
@@ -272,19 +272,6 @@ export default {
     taskTitle: '',
     taskDesc: '',
 
-    tasks: [{
-      time: new Date(),
-      friendlyTime: '10:10',
-      friendlyDate: '2021-09-12',
-
-      title: 'Naglowek',
-      desc: 'To jest piekny opis',
-
-      timeInplaceMenu: false,
-      dateInplaceMenu: false,
-      titleInplaceChange: false,
-      descInplaceChange: false,
-    }],
     doneTasks: [],
   }),
   methods: {
@@ -344,14 +331,14 @@ export default {
         taskTime.setHours(this.taskFriendlyTime.substr(0, 2))
         taskTime.setMinutes(this.taskFriendlyTime.substr(3, 2))
 
-        this.tasks.push({
+        this.$store.state.tasks.push({
           time: taskTime, 
           friendlyTime: this.taskFriendlyTime,
           friendlyDate: this.taskFriendlyDate,
           title: this.taskTitle, 
           desc: this.taskDesc
         })
-        this.sortTasks()
+        this.$store.state.sortTasks()
         this.overlay = false
 
         let taskData = new FormData()
@@ -372,31 +359,31 @@ export default {
       }
     },
     updateTaskTime(index, friendlyTime) {
-      let taskTime = this.tasks[index].time
+      let taskTime = this.$store.state.tasks[index].time
       taskTime.setHours(friendlyTime.substr(0, 2))
       taskTime.setMinutes(friendlyTime.substr(3, 2))
 
-      this.tasks[index].time = taskTime
-      this.tasks[index].timeInplaceMenu = false
+      this.$store.state.tasks[index].time = taskTime
+      this.$store.state.tasks[index].timeInplaceMenu = false
 
-      this.sortTasks()
+      this.$store.commit('sortTasks')
     },
     updateTaskDate(index, friendlyDate) {
-      let taskTime = this.tasks[index].time
+      let taskTime = this.$store.state.tasks[index].time
       taskTime.setFullYear(friendlyDate.substr(0, 4))
       taskTime.setMonth(parseInt(friendlyDate.substr(5, 2)) - 1)
       taskTime.setDate(friendlyDate.substr(8, 2))
       
-      this.tasks[index].time = taskTime
-      this.tasks[index].dateInplaceMenu = false
+      this.$store.state.tasks[index].time = taskTime
+      this.$store.state.tasks[index].dateInplaceMenu = false
 
-      this.sortTasks()
+      this.$store.commit('sortTasks')
     },
     updateTitle(index, event) {
-      this.tasks[index].title = event.target.value
-      this.tasks[index].titleInplaceChange = false
+      this.$store.state.tasks[index].title = event.target.value
+      this.$store.state.tasks[index].titleInplaceChange = false
 
-      this.sortTasks()
+      this.$store.commit('sortTasks')
     },
     cancelTaskAdding() {
       this.overlay = false
@@ -404,22 +391,12 @@ export default {
       this.taskDesc = ''
     },
     deleteTask(index) {
-      this.tasks.splice(index, 1)
-      this.sortTasks()
+      this.$store.state.tasks.splice(index, 1)
+      this.$store.commit('sortTasks')
     },
     archiveTask(index) {
-      this.doneTasks.push(this.tasks.splice(index, 1))
-      this.sortTasks()
-    },
-    sortTasks() {
-      const currentTime = new Date().getTime()
-      this.tasks.sort((a, b) => {
-        const aTime = a.time.getTime()
-        const bTime = b.time.getTime()
-        if (aTime - currentTime < bTime - currentTime) return -1
-        else if (aTime - currentTime > bTime - currentTime) return 1
-        else return 0
-      })
+      this.doneTasks.push(this.$store.state.tasks.splice(index, 1))
+      this.$store.commit('sortTasks')
     }
   }
 };

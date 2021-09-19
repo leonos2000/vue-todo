@@ -5,7 +5,7 @@ import re
 from django.shortcuts import redirect, render
 from django.http import JsonResponse
 from django.middleware import csrf
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.sites.shortcuts import get_current_site
@@ -20,28 +20,13 @@ from .models import Task
 
 
 def appView(request):
+    csrf.get_token(request)
     pageType = request.GET.get('pageType')
     context = {
         'pageType': 'default' if pageType is None else pageType,
         'authenticated': True if request.user.is_authenticated else False,
     }
     return render(request, 'base.html', context={'json': context})
-
-def getUserData(request):
-    if request.user.is_authenticated:
-        response = {
-            'status': 'success',
-            'username': request.user.username,
-            'tasks': {}
-            }
-        for task in Task.objects.filter(user=request.user):
-            response['tasks'][task.id] = {}
-            response['tasks'][task.id]['title'] = task.title
-            response['tasks'][task.id]['desc'] = task.desc
-            response['tasks'][task.id]['timestamp'] = datetime.datetime.timestamp(task.date)*1000
-
-        return JsonResponse(response)
-    return JsonResponse({'status': 'error'})
 
 def saveTask(request):
     if request.method == 'POST':
@@ -65,11 +50,25 @@ def loginUser(request):
         user = authenticate(username=request.POST.get('username'), password=request.POST.get('password'))
         login(request, user)
 
-        return JsonResponse({
-            'status': 'success',
-            'token': csrf.get_token(request)
-            })
+        if request.user.is_authenticated:
+            response = {
+                'status': 'success',
+                'username': request.user.username,
+                'tasks': {}
+                }
+            for task in Task.objects.filter(user=request.user):
+                response['tasks'][task.id] = {}
+                response['tasks'][task.id]['title'] = task.title
+                response['tasks'][task.id]['desc'] = task.desc
+                response['tasks'][task.id]['timestamp'] = datetime.datetime.timestamp(task.date)*1000
+
+        return JsonResponse(response)
     return JsonResponse({'status': 'error'})
+
+def logoutUser(request):
+    logout(request)
+    return redirect('/')
+
 
 def registerUser(request):
     if request.method == 'POST':

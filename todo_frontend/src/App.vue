@@ -1,26 +1,38 @@
 <template>
   <v-app>
     <!-- APPBAR -->
-    <v-app-bar app color="primary" dark>
-      <v-toolbar-title>TODO</v-toolbar-title>
+    <v-app-bar app color="primary" dark>      
+      <v-toolbar-title @click="$router.push('/')">
+          TODO
+      </v-toolbar-title>
       <v-spacer></v-spacer>
-      <router-link to="/">
-        <v-btn text rounded>Dashboard</v-btn>
-      </router-link>
       <router-link 
         to="/login"
         v-if="!$store.state.authenticated"  
       >
         <v-btn text rounded>Login</v-btn>
       </router-link>
-      
-      <v-btn
-        text
-        reounded
+      <v-menu 
         v-else
+        offset-y
       >
-        zalogowano
-      </v-btn>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            text
+            rounded
+            v-bind="attrs"
+            v-on="on"
+          >
+            Hi, {{ username }}
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item>
+            <v-list-item-title @click="logout()">Logout</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
     </v-app-bar>
 
     <v-main>
@@ -35,11 +47,29 @@
 <script>
 export default {
   created() {
-    let context = JSON.parse(document.getElementById('contextJson').textContent)
+    let djangoContext = JSON.parse(document.getElementById('contextJson').innerText)
 
-    console.log(context)
-    this.$store.commit('setPageType', context.pageType)
-    if (context.authenticated) this.$store.commit('auth')
+    this.$store.commit('setPageType', djangoContext.pageType)
+    if (djangoContext.authenticated) this.$store.commit('auth')
+  },
+  computed: {
+    username() {
+      return this.$store.state.username
+    }
+  },
+  methods: {
+    logout() {
+      let data = new FormData()
+      data.append('csrfmiddlewaretoken', this.$cookies.get('csrftoken'))
+      this.axios.post('/login/logout/', data)
+        .then(() => {
+          this.$store.commit('deAuth')
+          console.log('logout successfull')
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    }
   }
 }
 </script>

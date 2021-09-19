@@ -261,13 +261,18 @@ export default {
 
       this.axios.post('/login/login/', data)
         .then(res => {
+          console.log(res)
           if (res.data.status == 'success') {
             this.$store.commit('auth')
 
-            this.axios.get('/getUser/')
-              .then(res => {
-                console.log(res.data)
+            for (let task in res.data.tasks) {
+              this.$store.commit('addTask', {
+                title: res.data.tasks[task].title,
+                desc: res.data.tasks[task].desc,
+                timestamp: res.data.tasks[task].timestamp,
               })
+            }
+            
 
             this.$router.push({ name: 'Dashboard'})
           }
