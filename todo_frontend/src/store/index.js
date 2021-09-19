@@ -7,6 +7,7 @@ export default new Vuex.Store({
   state: {
     pageType: 0,
     authenticated: false,
+    username: '-',
     userTasks: []
   },
   mutations: {
@@ -21,6 +22,9 @@ export default new Vuex.Store({
     },
     addTask(state, taskObject) {
       state.userTasks.push(taskObject)
+    },
+    setUsername(state, username) {
+      state.username = username
     }
   },
   actions: {

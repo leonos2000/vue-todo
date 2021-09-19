@@ -13,6 +13,7 @@
       >
         <v-btn text rounded>Login</v-btn>
       </router-link>
+      
       <v-btn
         text
         reounded
@@ -33,9 +34,12 @@
 
 <script>
 export default {
-  mounted() {
+  created() {
     let context = JSON.parse(document.getElementById('contextJson').textContent)
+
+    console.log(context)
     this.$store.commit('setPageType', context.pageType)
+    if (context.authenticated) this.$store.commit('auth')
   }
 }
 </script>
