@@ -35,10 +35,7 @@
 export default {
   mounted() {
     let context = JSON.parse(document.getElementById('contextJson').textContent)
-
-    console.log(context.pageType)
     this.$store.commit('setPageType', context.pageType)
-    this.$store.commit('setCsrfToken', context.token)
   }
 }
 </script>

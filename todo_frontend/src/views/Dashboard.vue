@@ -358,9 +358,7 @@ export default {
         taskData.append('title', this.taskTitle)
         taskData.append('desc', this.taskDesc)
         taskData.append('timestamp', taskTime.getTime())
-        taskData.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
-
-        console.log(this.$store.state.csrfToken)
+        taskData.append('csrfmiddlewaretoken', this.$cookies.get('csrftoken'))
 
         this.axios.post('/saveTask/', taskData)
           .then(res => {

@@ -257,9 +257,7 @@ export default {
 
       data.append('username', username)
       data.append('password', password)
-      data.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
-
-      console.log(this.$store.state.csrfToken)
+      data.append('csrfmiddlewaretoken', this.$cookies.get('csrftoken'))
 
       this.axios.post('/login/login/', data)
         .then(res => {
@@ -268,7 +266,6 @@ export default {
 
             this.axios.get('/getUser/')
               .then(res => {
-                this.$store.commit('setCsrfToken', res.data.token)
                 console.log(res.data)
               })
 
@@ -285,7 +282,7 @@ export default {
         data.append('username', username)
         data.append('email', email)
         data.append('password', password)
-        data.append('csrfmiddlewaretoken', this.$store.state.csrfToken)
+        data.append('csrfmiddlewaretoken', this.$cookies.get('csrftoken'))
 
         this.axios.post('/login/register/', data)
           .then(res => {
